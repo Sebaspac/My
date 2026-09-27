@@ -144,7 +144,7 @@ def page18(doc):
 def page19(doc):
     p = doc.page("19 Rechtemodell Cloud", "p19")
     p.header("19 Rechtemodell Cloud",
-             "Mechanik: Entra ID → SCIM → flache Gruppen → Restriction Sets → Permission je Kategorie × Rechtestufe (AE-18). "
+             "Mechanik (Kap. 13.2/13.3): Entra ID → SCIM → flache Gruppen → Restriction Sets → Permission je Kategorie × Rechtestufe (AE-18). "
              "Gesellschaftstrennung über die Pflichteigenschaft Mandant (E-01, Designprinzip P1)")
 
     top = 128
@@ -159,8 +159,8 @@ def page19(doc):
     gx, gw = 340, 310
     p.box(gx, top, gw, 420, "d.velop Gruppen (flach)", "group_t")
     grp = {}
-    specs = [("R", "DMS_R_*  Rollengruppen\n__Träger der Permissions (~7–10)__"),
-             ("G", "DMS_G_<MandantNr>  Gesellschaft\n__nur Werteträger RS_Mandant (~100–150)__"),
+    specs = [("R", "DMS_R_*  Rollengruppen\n__Träger der Permissions (~10–12)__"),
+             ("G", "DMS_G_ / DMS_GB_<MandantNr>  Gesellschaft\n__Werteträger RS_Mandant_Lesen / _Bearbeiten__"),
              ("GF", "DMS_GF_<Verbund>  Gesellschaftsverbund\n__Werteliste eigener Gesellschaften (GF)__"),
              ("O", "DMS_O_<ObjektID>  Objekt\n__Werteträger RS_Objekt (PL, Externe)__"),
              ("SI", "dv_* / SI_<Rolle>_<MandantNr>\n__smart-invoice-Workflowrollen, REB__")]
@@ -175,12 +175,12 @@ def page19(doc):
     rx, rw = 720, 300
     p.box(rx, top, rw, 420, "Restriction Sets (Gruppe → Werteliste)", "group_t")
     rsm = p.box(rx + 15, top + 40, rw - 30, 170,
-                "**RS_Mandant**\nDMS_G_1001 → [1001]\nDMS_G_1002 → [1002]\n…\nDMS_GF_Nord → [1001, 1002, 1005]\n\n"
+                "**RS_Mandant_Lesen**\nDMS_G_10010 → [10010]\nDMS_G_10020 → [10020]\nDMS_GF_Nord → [10010, 10020, 10050]\n**RS_Mandant_Bearbeiten**\nDMS_GB_10010 → [10010]\n"
                 "__neue Gesellschaft = 1 Zuordnung__\n__(API POST …/assignments)__", "dvelop_l", extra="align=left;spacingLeft=10;")
     rso = p.box(rx + 15, top + 230, rw - 30, 80,
                 "**RS_Objekt**\nDMS_O_4711 → [4711]\n__Projektleiter / Externe nur für ein Objekt__", "dvelop_l", extra="align=left;spacingLeft=10;")
     p.box(rx + 15, top + 322, rw - 30, 86,
-          "Optional je Rechtestufe eigene Sets (RS_Mandant_Lesen, RS_Mandant_Bearbeiten), wenn jemand in Gesellschaft A bearbeiten und in B nur lesen soll.",
+          "Zwei Sets je Rechtestufe, damit jemand in Gesellschaft A bearbeiten und in B nur lesen kann (Werteliste aus allen Gruppen, T03).",
           "text", extra="fontSize=10;")
     p.edge(grp["G"], rsm, "Werte", "data", exit=(1, 0.5), entry=(0, 0.4))
     p.edge(grp["GF"], rsm, "", "data", exit=(1, 0.5), entry=(0, 0.8))
@@ -190,12 +190,12 @@ def page19(doc):
     px_, pw = 1090, 340
     p.box(px_, top, pw, 420, "Permissions: Kategorie × Rechtestufe", "group_t")
     perms = [
-        ("K-01 – Mandant – Lesen", "Mandant = @Filter(RS_Mandant) → DMS_R_Lesen, DMS_R_GF: read"),
-        ("K-01 – Mandant – Bearbeiten", "Mandant = @Filter(RS_Mandant) → DMS_R_Sachbearbeitung: read + write"),
-        ("K-01 – Alle – Buchhaltung", "nur CATEGORY (ohne Filter) → DMS_R_Buchhaltung: read + write"),
-        ("K-11 – Objekt – PL", "Objekt-ID = @Filter(RS_Objekt) → DMS_R_PL: read"),
-        ("K-01 – Workflowbeteiligte", "WorkflowbeteiligteIDs = @CURRENT_USER / @CURRENT_USER_IN_GROUP: read"),
-        ("K-xx – Löschen", "→ DMS_R_Fachadmin: delete (+ Löschsperre)"),
+        ("K01_M_Lesen", "Mandant = @Filter(RS_Mandant_Lesen) → DMS_R_Freigeber, DMS_R_Controlling: read"),
+        ("K01_M_Bearbeiten", "Mandant = @Filter(RS_Mandant_Bearbeiten) → DMS_R_Pruefer: read + write"),
+        ("K01_A_Zentral", "nur CATEGORY (ohne Filter) → DMS_R_Buchhaltung_Extern: read + write"),
+        ("K11_O_Lesen", "Objekt-ID = @Filter(RS_Objekt) → Projektleitung, DMS_R_Partner_Extern: read"),
+        ("K01_W_User / K01_W_Group", "WorkflowbeteiligteIDs = @CURRENT_USER / @CURRENT_USER_IN_GROUP: read"),
+        ("Kxx_Admin", "→ DMS_R_Fachadmin: read/write/delete (+ Löschsperre)"),
     ]
     pb = []
     py = top + 36
@@ -219,20 +219,20 @@ def page19(doc):
 
     # ---------------- Beispiel Sachbearbeiter Nord ----------------
     by = 580
-    p.box(40, by - 6, 1574, 300, "Beispiel: Benutzer „Sachbearbeiter Nord\" sieht nur Mandant 1001", "group_g")
+    p.box(40, by - 6, 1574, 300, "Beispiel: Benutzerin „Asset Managerin Nord\" sieht und bearbeitet nur Mandant 10010", "group_g")
     u = p.box(60, by + 60, 240, 110,
-              "**Benutzer „Sachbearbeiter Nord\"** (Beispiel)\n\nMitglied in:\nDMS_R_Sachbearbeitung\nDMS_G_1001", "task")
+              "**„Asset Managerin Nord\"** (Beispiel)\n\nMitglied in:\nDMS_R_Pruefer\nDMS_G_10010, DMS_GB_10010", "task")
     calc = p.box(360, by + 60, 270, 110,
-                 "**RS_Mandant wertet alle Gruppen des Benutzers aus**\n\nDMS_G_1001 → [1001]\nberechnete Werteliste = **[1001]**",
+                 "**RS_Mandant_Bearbeiten wertet alle Gruppen des Benutzers aus**\n\nDMS_GB_10010 → [10010]\nberechnete Werteliste = **[10010]**",
                  "dvelop_l")
     perm = p.box(690, by + 60, 290, 110,
-                 "**Permission K-01 – Mandant – Bearbeiten**\n(zugeordnet an DMS_R_Sachbearbeitung)\n\nPrüfung: Mandant des Dokuments ∈ [1001]?",
+                 "**Permission K01_M_Bearbeiten**\n(zugeordnet an DMS_R_Pruefer)\n\nPrüfung: Mandant des Dokuments ∈ [10010]?",
                  "dvelop_l")
     gw_ = p.box(1020, by + 80, 110, 70, "Mandant\nin Liste?", "gateway")
     d1 = p.box(1200, by + 40, 390, 56,
-               "RE-2026-1041 · Musterbau GmbH · 14.756,00 €\nMandant 1001 · Livos Objektgesellschaft Nord mbH", "doc")
-    d2 = p.box(1200, by + 120, 390, 50, "Eingangsrechnung Mandant 1002 (Beispiel SUED)", "doc")
-    d3 = p.box(1200, by + 190, 390, 50, "Eingangsrechnung Mandant 1003 (Beispiel BAUP)", "doc")
+               "RE-2026-1041 · Musterbau GmbH · 14.756,00 €\nMandant 10010 · Livos Objektgesellschaft Nord mbH", "doc")
+    d2 = p.box(1200, by + 120, 390, 50, "Eingangsrechnung Mandant 10020 (Livos Objektgesellschaft Süd mbH)", "doc")
+    d3 = p.box(1200, by + 190, 390, 50, "Eingangsrechnung Mandant 10030 (Livos Bau & Projekt GmbH)", "doc")
     p.edge(u, calc, "", "flow")
     p.edge(calc, perm, "", "flow")
     p.edge(perm, gw_, "", "flow")
@@ -240,8 +240,8 @@ def page19(doc):
     p.edge(gw_, d2, "nein: unsichtbar", "red", exit=(1, 0.5), entry=(0, 0.5))
     p.edge(gw_, d3, "nein", "red", exit=(0.5, 1), entry=(0, 0.5), points=[(1075, by + 215)])
     p.box(60, by + 190, 930, 96,
-          "**Ausnahme Workflowbeteiligte:** Wird der Benutzer an einer Rechnung von Mandant 1002 beteiligt (z.B. als Vertretung), erhält er über "
-          "„K-01 – Workflowbeteiligte\" Leserecht auf genau diese Rechnung. Deshalb Vertretungen möglichst innerhalb derselben Gesellschaftsgruppe (AE-17).\n"
+          "**Ausnahme Workflowbeteiligte:** Wird der Benutzer an einer Rechnung von Mandant 10020 beteiligt (z.B. als Vertretung), erhält er über "
+          "„K01_W_User\" Leserecht auf genau diese Rechnung. Deshalb Vertretungen möglichst innerhalb derselben Gesellschaftsgruppe (AE-17).\n"
           "**Grenze des orthogonalen Modells:** Rolle × Gesellschaft gilt für alle Gesellschaften des Benutzers gleich – abweichende Rechte je Gesellschaft über getrennte Sets je Rechtestufe.",
           "text", extra="fontSize=11;")
 
@@ -256,14 +256,14 @@ def page19(doc):
     p.box(480, wy, 420, 200,
           "**Test T03 (OP-08) – Kernannahme vor Go-live**\n\n"
           "Annahme: Die Werteliste eines Restriction Sets ergibt sich aus **allen** Gruppen des Benutzers – Permission an der Rollengruppe, Werte nur über die Gesellschaftsgruppe.\n\n"
-          "Test im Test-Tenant: Benutzer in DMS_R_Sachbearbeitung + DMS_G_1001 sieht nur 1001.\n"
+          "Test im Test-Tenant: Benutzer in DMS_R_Pruefer + DMS_G_10010 sieht nur 10010.\n"
           "Falls widerlegt: kombinierte Gruppen DMS_<Rolle>_<MandantNr> (mehr Gruppen, weiterhin per API automatisierbar).",
           "open", extra="align=left;verticalAlign=top;spacing=6;fontSize=11;")
     p.box(920, wy, 380, 200,
           "**Neue Gesellschaft – 4 Schritte, per API automatisierbar (S-04)**\n\n"
           "1. Dataset-Wert Mandant (E-01)\n"
-          "2. Entra-Gruppe DMS_G_<Nr> (SCIM)\n"
-          "3. Zuordnung im RS_Mandant\n"
+          "2. Entra-Gruppen DMS_G_/DMS_GB_<Nr> (SCIM)\n"
+          "3. Zuordnung in RS_Mandant_Lesen/_Bearbeiten\n"
           "4. smart-invoice-Mandant im Bucket\n\n"
           "REB-Berechtigung je Mandant ggf. manuell (API nicht dokumentiert).\nMengengerüst: ca. 50–70 Permissions, unabhängig von der Gesellschaftszahl.",
           "info")
@@ -332,7 +332,7 @@ def page20(doc):
 
     # 4 Rückmeldung
     y = 920
-    frame(y, 170, "④ täglich / stündlich · S-06 Zahlstatus (Status A, BeSync)")
+    frame(y, 170, "④ täglich (nachts, optional mehrfach) · S-06 Zahlstatus (Status A, BeSync, Phase 3)")
     _hline(p, L["bs"], L["dt"], y + 50, "msg", "OPOS lesen je Mandant\n(DATEVconnect accounts-payable)", lw=300)
     _hline(p, L["dt"], L["bs"], y + 84, "data", "ausgeglichene Posten, Zahldatum", lw=300, above=False)
     _hline(p, L["bs"], L["dv"], y + 140, "straight", "S-06: DMS-Eigenschaft Zahlstatus = bezahlt / teilbezahlt, Zahldatum (E-23) am archivierten Beleg", lw=700)
@@ -351,7 +351,7 @@ def page20(doc):
           "small")
     p.box(rx, 430, rw, 122,
           "**Nicht in der Feldliste – Konsequenzen**\n"
-          "• **Fälligkeit, Skonto:** nicht übergeben; DATEV nutzt Zahlungsbedingungen aus dem Kreditorenstamm. Ob Belegfeld 2 für ein Fälligkeitsdatum nutzbar ist, ist offen [O].\n"
+          "• **Fälligkeit, Skonto:** nicht übergeben; DATEV nutzt Zahlungsbedingungen aus dem Kreditorenstamm. Ob Belegfeld 2 für ein Fälligkeitsdatum nutzbar ist, ist offen [O] (OP-22).\n"
           "• **Postensperre:** fehlt → Zahlungsfreigabe muss **vor** der Übergabe liegen (AE-06).\n"
           "• **IBAN:** fehlt → IBAN-Abgleich in smart invoice gegen Stamm (S-02).\n"
           "• **Zahlbetrag/Kürzung:** übergeben wird der Bruttobetrag → Verarbeitung mit Trios klären (OP-05).",
@@ -369,7 +369,7 @@ def page20(doc):
             ["S-02 Stammdaten", "DATEV → smart invoice, täglich", "K"],
             ["S-01 Buchungsvorschlag + Beleglink", "d.velop → DATEV, je Rechnung", "K"],
             ["S-07 SEPA-Datei", "DATEV → multicash, je Zahllauf", "S"],
-            ["S-06 Zahlstatus", "DATEV → BeSync → d.velop", "A"]]
+            ["S-06 Zahlstatus (Phase 3)", "DATEV → BeSync → d.velop", "A"]]
     p.table(rx, 766, [200, 234, 50], srow, rowh=24, styles={(r, 2): "td_c" for r in range(1, 5)})
     status_legend(p, rx, 910)
     p.box(rx + 316, 910, 168, 150,
@@ -398,11 +398,11 @@ def page21(doc):
     ui_buttons(p, cx + cw - 250, cy - 2, [("CSV-Export (alle Spalten)", "ui_btn")], w=250)
     cols = [56, 112, 92, 76, 118, 80, 124, 78]
     rows = [["Mandant", "Kreditor", "Rechnungs-Nr", "Brutto €", "Aktueller Schritt", "Schritt seit", "Zugewiesen", "Status"],
-            ["1001", "Musterbau GmbH", "RE-2026-1041", "14.756,00", "Zahlungsfreigabe", "3 Tage", "Zahlungsfreig. Nord", "offen"],
-            ["1001", "Elektro Kühn KG", "2026-0877", "2.380,00", "Sachl. Prüfung", "9 Tage", "M. Berger", "Eskalation 1"],
-            ["1002", "Blitz Reinigung", "GR-55120", "1.071,00", "Fachl. Freigabe", "2 Tage", "Freigeber Süd", "offen"],
-            ["1005", "Dachtechnik Olsen", "D-2026-311", "8.925,00", "Verteilung", "1 Tag", "Rechnungseingang", "Clearing"],
-            ["1005", "Stadtwerke Beispiel", "SW-99812", "642,60", "Buchhaltung", "0 Tage", "Trios", "offen"]]
+            ["10010", "Musterbau GmbH", "RE-2026-1041", "14.756,00", "Zahlungsfreigabe", "3 Tage", "Zahlungsfreig. Nord", "offen"],
+            ["10010", "Elektro Kühn KG", "2026-0877", "2.380,00", "Sachl. Prüfung", "9 Tage", "M. Berger", "Eskalation 1"],
+            ["10020", "Blitz Reinigung", "GR-55120", "1.071,00", "Fachl. Freigabe", "2 Tage", "Freigeber Süd", "offen"],
+            ["10030", "Dachtechnik Olsen", "D-2026-311", "8.925,00", "Verteilung", "1 Tag", "Rechnungseingang", "Clearing"],
+            ["10030", "Stadtwerke Beispiel", "SW-99812", "642,60", "Buchhaltung", "0 Tage", "Trios", "offen"]]
     ui_table(p, cx, cy + 36, cols, rows, rowh=26)
     # Hervorhebung der vier Kernspalten
     kx = cx + sum(cols[:4])
@@ -436,31 +436,35 @@ def page21(doc):
     # KPI-Katalog
     ky = 520
     p.box(40, ky, 960, 26, "KPI-Katalog (Vorschlag, mit Livos-Controlling abzustimmen)", "h2")
-    krow = [["ID", "Kennzahl", "Quelle", "Grad"],
-            ["KPI-01", "Offene Rechnungen je Gesellschaft und Schritt (Anzahl, Betrag)", "REB Alle offenen, Gruppierung", "S"],
-            ["KPI-02", "Liegezeit im aktuellen Schritt", "REB „Aktueller Schritt seit\"", "S"],
-            ["KPI-03", "Rückstau je Bearbeiter/Gruppe", "REB „Zugewiesen\"", "S"],
-            ["KPI-04", "Eskalierte Rechnungen (Stufe 1/2)", "REB Status, „An mich eskaliert\"", "S"],
-            ["KPI-05", "Skonto fällig in n Tagen (Betrag)", "REB Skontofälligkeit/-betrag", "S"],
-            ["KPI-06", "Offene, unverbuchte Rechnungen zum Stichtag", "REB CSV-Export Monatsende", "S"],
-            ["KPI-07", "Durchlaufzeit Eingang → Übergabe DATEV", "S-12 Ereignisprotokoll → evidanza", "A"],
-            ["KPI-08", "Historische Liegezeit je Schritt und Benutzer", "S-12 → evidanza (Bearbeiter: offen O)", "A"],
-            ["KPI-09", "Skontoverlust (€) je Gesellschaft/Monat", "S-12 + Zahlstatus S-06 → evidanza", "A"],
-            ["KPI-10", "Eingangsvolumen je Kanal und Gesellschaft (E-25)", "DMS-Suche/API → evidanza", "A"],
-            ["KPI-11", "Klärfall- und Rückweisungsquote (WF-04, WF-05, E-26)", "S-12 → evidanza", "A"],
-            ["KPI-12", "Zahlungsdauer Zahlungsfreigabe → bezahlt", "S-06 Zahlstatus/Zahldatum → evidanza", "A"]]
+    krow = [["ID", "Kennzahl (K16 §16.3)", "Quelle", "Grad", "ab Phase"],
+            ["KPI-01", "Belege im Umlauf je Status (je Mandant, Segment)", "REB (Stichtag), BeSync (Verlauf)", "S / A", "1 / 2"],
+            ["KPI-02", "Liegezeit aktueller Schritt", "REB", "S", "1"],
+            ["KPI-03", "Durchlaufzeit Eingang → Freigabe", "BeSync", "A", "2"],
+            ["KPI-04", "Durchlaufzeit Eingang → Übergabe DATEV", "BeSync", "A", "2"],
+            ["KPI-05", "Durchlaufzeit Eingang → Zahlung", "BeSync + DATEV (S-06)", "A", "3"],
+            ["KPI-06", "Liegezeit je Bearbeiter und Schritt", "BeSync (Bearbeiter offen: OP-26, T31)", "A", "2"],
+            ["KPI-07", "Skontoquote", "BeSync + DATEV (S-06)", "A", "3"],
+            ["KPI-08", "Verlorenes Skonto", "BeSync + DATEV (S-06)", "A", "3"],
+            ["KPI-09", "Klärfallquote (je Klärgrund)", "BeSync", "A", "2"],
+            ["KPI-10", "Dublettenquote", "BeSync (Endpfad, Begründung)", "A", "2"],
+            ["KPI-11", "Automatisierungsquote Erkennung", "BeSync + d.velop invoices Statistik", "A / S", "2"],
+            ["KPI-12", "E-Rechnungsquote", "REB, BeSync", "S / A", "1"],
+            ["KPI-13", "Rückweisungsquote nach Grund (E-26)", "BeSync", "A", "2"],
+            ["KPI-14", "Kürzungsvolumen (E-13)", "BeSync", "A", "2"],
+            ["KPI-15", "PM-Freigaben offen (WF-03)", "REB", "S", "2"],
+            ["KPI-16", "Eskalationen (Stufe 1/2)", "REB, BeSync", "S / A", "1"],
+            ["KPI-17", "Offene Bau-Prüfungen (BIM4You-Transfers)", "BeSync", "A", "3"]]
     st = {}
     for r in range(1, len(krow)):
         st[(r, 3)] = "td_c"
-    ye = p.table(40, ky + 30, [70, 470, 360, 60], krow, rowh=26, styles=st)
-    p.box(40, ye + 8, 960, 40,
-          "Grad: S = Standard im REB (aktueller Stand) · A = Anpassung über BeSync/evidanza (Historie, übergreifende Kennzahlen). "
-          "Zusätzlich im Standard: Analyse der Erkennungsqualität (d.velop invoices).", "small", extra="fontSize=10;")
-    p.box(40, ye + 54, 960, 80,
-          "**Einführung (Vorschlag, siehe Seite 22)**\n"
-          "• Phase 1: REB-Standardsichten; Phase 2: eigene Schnellzugriffe je Rolle, Monats-CSV für offene/unverbuchte Rechnungen (KPI-01…06).\n"
-          "• Phase 2: S-12 Ereignisprotokoll → MS SQL → evidanza (KPI-07…12); Zahlstatus-Kennzahlen nach S-06 in Phase 3.\n"
-          "• Offen: lizenzierte evidanza-Konnektoren (SQL/REST) und vorhandenes Livos-BI-Modell; Kennzahldefinitionen mit dem Controlling (R-07) festlegen.",
+        st[(r, 4)] = "td_c"
+    ye = p.table(40, ky + 30, [66, 380, 380, 64, 70], krow, rowh=22, styles=st)
+    p.box(40, ye + 6, 960, 26,
+          "Grad: S = Standard im REB (Stichtag) · A = Anpassung über BeSync-Ereignisprotokoll/evidanza (Historie). KPI-06 nur nach Klärung mit Datenschutz/Betriebsrat (16.5).",
+          "small", extra="fontSize=10;")
+    p.box(40, ye + 36, 960, 56,
+          "**Einführung (Kap. 16, 19):** Phase 1 REB-Sichten (KPI-01/02/12/16) und Protokollierung S-12 ab Pilot-Go-live · "
+          "Phase 2 evidanza-Auswertungen (KPI-03, 04, 06, 09–11, 13–15) · Phase 3 nach S-06 bzw. BIM4You-Transfer (KPI-05, 07, 08, 17).",
           "info", extra="fontSize=11;")
 
     # evidanza-Pfad
@@ -481,7 +485,7 @@ def page21(doc):
           "**Betriebsaspekte**\n"
           "• Aufgabenhistorie der Plattform nur 30–365 Tage → laufend abziehen.\n"
           "• Ist der Webhook nicht erreichbar, läuft der Beleg in den Fehlerschritt → hochverfügbar auslegen oder nur an unkritischen Verbindungen exportieren.\n"
-          "• Offen: enthält das Export-Event den handelnden Benutzer? (sonst Historie/Workflowbeteiligte)",
+          "• Offen: handelnder Benutzer im Export-Event (sonst Task-API/E-32; OP-26, T31)",
           "note")
     status_legend(p, ex, ey + 378)
     p.box(ex + 316, ey + 378, 278, 150,
@@ -494,103 +498,97 @@ def page21(doc):
 def page22(doc):
     p = doc.page("22 Roadmap", "p22")
     p.header("22 Roadmap",
-             "Vorschlag für die schrittweise Einführung (Designprinzip P8) – Monate ab Beauftragung. Dauer abhängig von den "
-             "Entscheidungen in Phase 0, Verfügbarkeit Livos/Trios und DATEV-Komponenten")
+             "Schrittweise Einführung (P8) nach Kap. 19.2/19.8 – 12 Monate ab Beauftragung (M1); abhängig von DATEV-Anbindung, Phase-0-Entscheidungen, Key-Usern")
     p.box(250, 32, 290, 28, "VORSCHLAG – Zeitplan zur Abstimmung", "badge_o", extra="fontSize=12;")
 
-    lx, lw = 40, 430
-    tx0, mw, months = 480, 62, 18
-    y0 = 118
-    # Monatsskala
-    p.box(lx, y0, lw, 40, "Phase / Arbeitspaket", "th")
+    lx, lw = 40, 470
+    tx0, mw, months = 520, 91, 12
+    y0 = 116
+    p.box(lx, y0, lw, 36, "Phase / Arbeitspaket (IDs)", "th")
     for m in range(months):
-        p.box(tx0 + m * mw, y0, mw, 40, "M%d" % (m + 1), "th", extra="align=center;")
+        p.box(tx0 + m * mw, y0, mw, 36, "M%d" % (m + 1), "th", extra="align=center;")
+    # (Name, Start, Ende) in Monaten ab 0; Balken aus K19 §19.8
     phases = [
-        ("P0 Klärung & Setup", 0, 2, [
-            ("Entscheidungen AE, offene Punkte P1 (OP-01…05, 16, 17)", 0, 2, "open"),
-            ("Prozess-Workshop: Freigabematrix, Rollen, Gründe, Aktenstruktur", 0, 2, "ext"),
-            ("Tenant C1 + Test-Tenant, Entra ID / SSO, Grundkonfiguration", 1, 2, "dvelop_l"),
-            ("DATEV-Komponenten, Riecken-Gateway beauftragen (Trios, Hoster)", 0, 2.5, "ext"),
+        ("Phase 0 Klärung & Setup (4–6 Wochen)", 0, 2, "M1–M2", [
+            ("Prozess- und Detailworkshops; Entscheidungen AE-08, AE-09, AE-11, ED-01 ff.", 0, 2, "ext"),
+            ("Test-Tenant, Entra ID (SCIM/OIDC); Plattformtests T01–T23 ff.", 0, 2, "open"),
+            ("DATEV-Komponenten und Gateway bereitstellen (LDconnect, Riecken, OP-04)", 0, 3, "ext"),
+            ("KI-PoC Kreditorenkonsolidierung; Mandantenerkennung vorab (OP-02)", 0, 2, "mdis"),
         ]),
-        ("P1 MVP Rechnungseingang", 2, 6, [
-            ("WF-01 Standard-ER, WF-04 Klärfall, WF-08 Aufgaben", 2, 4.5, "dvelop_l"),
-            ("S-01 / S-02 DATEV (LDconnect), S-13 Identitäten, S-14 Postfächer", 2, 4.5, "dvelop_l"),
-            ("Rechtemodell, Tests T03 / T13, Mandantenerkennung (OP-02)", 2.5, 4, "open"),
-            ("Abnahmetest, Schulung Key-User und Pilotnutzer", 4, 5, "ext"),
-            ("Pilot 3–5 Gesellschaften + Hypercare", 5, 6, "dvelop"),
+        ("Phase 1 MVP Rechnungseingang (Aufbau + Pilot)", 1, 5, "Aufbau M2–M4 · Pilot M4–M5", [
+            ("WF-01, WF-04, WF-08; Rechte, Aktenplan, Aufbewahrung", 1, 4, "dvelop_l"),
+            ("S-01, S-02 DATEV · S-13 Identitäten · S-14 E-Mail (ER)", 1, 4, "dvelop_l"),
+            ("S-04 Erstimport Pilotgesellschaften · S-05 Anforderung per E-Mail", 2, 4, "ext"),
+            ("S-12 Protokollierung ab Pilot-Go-live · S-15 Voraussetzung P1", 3, 5, "mdis"),
+            ("Pilotbetrieb 3–5 Gesellschaften (Bau über WF-01 ohne BIM4You-Automatik)", 3, 5, "dvelop"),
         ]),
-        ("P2 Rollout + WF-03 / WF-05 + Reporting", 6, 9, [
-            ("Rollout alle Gesellschaften in Wellen", 6, 9, "dvelop"),
-            ("WF-03 PM-Freigabe (Rückmeldemail S-11)", 6, 8, "mdis"),
-            ("WF-05 Rückweisung / Kürzungsmitteilung (S-11)", 6, 8, "mdis"),
-            ("S-04 / S-05 Stammdatenautomatik Lieferanten-App", 6, 8.5, "mdis"),
-            ("Reporting: REB-Sichten, S-12 Ereignisprotokoll → evidanza", 7, 9, "mdis"),
+        ("Phase 2 Rollout, PM-Freigabe, Rückweisung, Reporting", 4, 7, "M5–M7", [
+            ("Rollout alle Gesellschaften in Wellen (20–30 je Welle)", 4, 7, "dvelop"),
+            ("WF-03 PM-Freigabe · WF-05 Rückweisung/Kürzung (S-11)", 4, 7, "mdis"),
+            ("S-04 / S-05 Automatik Lieferanten-App", 4, 7, "mdis"),
+            ("S-12 Auswertungen in evidanza · S-15 Exportskript + Probeexport", 4, 7, "mdis"),
         ]),
-        ("P3 Bau / BIM4You + Zahlstatus + FSB + WF-10", 9, 13, [
-            ("WF-02 Bau-ER mit BIM4You (S-08, S-09, S-10)", 9, 13, "mdis"),
-            ("S-06 Zahlstatus „bezahlt\" aus DATEV-OPOS", 9, 11, "mdis"),
-            ("FSB § 48b (AE-15)", 10, 12, "mdis"),
-            ("WF-10 externe Ad-hoc-Freigabe", 11, 13, "mdis"),
-            ("optional: S-16 PM-Buchungsdaten → BI", 11, 13, "open"),
+        ("Phase 3 Bau/BIM4You, Zahlstatus, FSB", 6, 10, "M7–M10", [
+            ("WF-02 Bau-ER mit BIM4You (S-08, S-09, S-10)", 6, 10, "mdis"),
+            ("S-06 Zahlstatus „bezahlt\" aus DATEV-OPOS", 6, 10, "mdis"),
+            ("FSB § 48b (AE-15) · WF-10 externe Ad-hoc-Freigabe (Stellungnahme)", 6, 10, "mdis"),
+            ("optional: S-16 PM-Buchungsdaten → BI", 6, 10, "open"),
         ]),
-        ("P4 Verträge + Post", 12, 16, [
-            ("WF-06 Vertragsprozess mit d.velop contracts (AE-20)", 12, 15, "dvelop_l"),
-            ("WF-07 Postverteilung: Scan, KI-Klassifizierung, mail dispatcher", 13, 16, "dvelop_l"),
-            ("d.velop pilot für Verträge (PoC, OP-19)", 14, 16, "open"),
+        ("Phase 4 Verträge, Post, DMS-Ausbau", 8, 11, "M9–M11", [
+            ("WF-06 Verträge mit d.velop contracts (AE-20)", 8, 11, "dvelop_l"),
+            ("WF-07 Postverteilung, KI-Klassifizierung, mail dispatcher (AE-21)", 8, 11, "dvelop_l"),
+            ("DMS-Ausbau, Outlook, mobile · d.velop pilot für Verträge (OP-19)", 8, 11, "open"),
         ]),
-        ("P5 Optimierung / KI / WF-09 / S-17", 16, 18, [
-            ("KI-Kontierung und Erkennung nachschärfen, X.One-Analysen", 16, 18, "dvelop_l"),
-            ("WF-09 weitere Freigaben ohne Rechnung", 16, 18, "dvelop_l"),
-            ("S-17 ERP-/PM-Stammdatensync (Folgeprojekt)", 16, 18, "open"),
+        ("Phase 5 Optimierung (fortlaufend)", 10, 12, "ab M11", [
+            ("KI-Auswertung, MDIS X.One (AE-27) · WF-09 Freigaben ohne Rechnung", 10, 12, "dvelop_l"),
+            ("S-17 ERP-/PM-Stammdatensync (Folgeprojekt)", 10, 12, "open"),
         ]),
     ]
-    ph_h, sub_h = 28, 21
-    y_end = y0 + 44 + sum(ph_h + len(sb) * sub_h + 4 for _, _, _, sb in phases)
-    # Monats-Gitterlinien (zuerst, damit Balken darüber liegen)
+    ph_h, sub_h = 26, 21
+    y_end = y0 + 40 + sum(ph_h + len(sb) * sub_h + 4 for _, _, _, _, sb in phases)
     for m in range(months + 1):
-        p.line(tx0 + m * mw, y0 + 40, tx0 + m * mw, y_end, "assoc", extra="strokeColor=%s;" % C['grey_m'])
-    for m in (2, 5, 9, 13, 16, 18):
-        p.line(tx0 + m * mw, y0 + 40, tx0 + m * mw, y_end + 8, "assoc", extra="strokeColor=%s;dashed=1;" % C['orange'])
-    y = y0 + 44
-    for name, a, b, subs in phases:
+        p.line(tx0 + m * mw, y0 + 36, tx0 + m * mw, y_end, "assoc", extra="strokeColor=%s;" % C['grey_m'])
+    y = y0 + 40
+    for name, a, b, lab, subs in phases:
         p.box(lx, y, lw, ph_h, name, "rounded=0;fillColor=%s;strokeColor=%s;fontColor=#FFFFFF;fontStyle=1;align=left;spacingLeft=8;fontSize=12;" % (C['navy'], C['navy']))
         p.box(tx0, y, months * mw, ph_h, "", "rounded=0;fillColor=%s;strokeColor=%s;opacity=60;" % (C['grey_l'], C['grey_m']))
-        p.box(tx0 + a * mw, y + 3, (b - a) * mw, ph_h - 6, "M%d–M%d" % (a + 1, b) if b - a >= 2 else "", "dvelop",
-              extra="fontSize=11;arcSize=30;")
+        p.box(tx0 + a * mw, y + 3, (b - a) * mw, ph_h - 6, lab, "dvelop", extra="fontSize=11;arcSize=30;")
         y += ph_h
         for sname, sa, sb, stl in subs:
-            p.box(lx, y, lw, sub_h, sname, "td", extra="fontSize=10;spacingLeft=16;")
+            p.box(lx, y, lw, sub_h, sname, "td", extra="fontSize=10;spacingLeft=14;")
             p.line(tx0, y + sub_h, tx0 + months * mw, y + sub_h, "line", extra="strokeColor=%s;" % C['grey_m'])
             p.box(tx0 + sa * mw + 2, y + 4, (sb - sa) * mw - 4, sub_h - 8, "", stl, extra="arcSize=30;")
             y += sub_h
         y += 4
 
-    # Meilensteine
+    # Meilensteine / Qualitätstore (K19 §19.8)
+    ms = [(2.0, "QG-0 Fein-\nkonzept, ED\n(Ende M2)"), (3.05, "QG-1a Pilot-\nGo-live\n(Anfang M4)"),
+          (4.0, "QG-1b Frei-\ngabe Rollout\n(Ende M4/M5)"), (7.0, "QG-2 alle\nGesellschaften\n(Ende M7)"),
+          (10.0, "QG-3 Bau/BIM4You\nproduktiv\n(Ende M10)"), (11.0, "QG-4 Verträge\n+ Post\n(Ende M11)")]
+    for m, _ in ms:
+        p.line(tx0 + m * mw, y0 + 36, tx0 + m * mw, y_end + 8, "assoc", extra="strokeColor=%s;dashed=1;" % C['orange'])
     my = y + 8
-    p.box(lx, my, lw, 50, "Meilensteine (Vorschlag)", "th", extra="fontSize=12;")
-    p.box(tx0, my, months * mw, 50, "", "rounded=0;fillColor=%s;strokeColor=%s;" % (C['yellow_l'], C['grey_m']))
-    ms = [(2, "MS1 Entscheidungen\n+ Setup"), (5, "MS2 Pilot\nGo-live"), (9, "MS3 Rollout\nabgeschlossen"),
-          (13, "MS4 Bau-Integr.\nproduktiv"), (16, "MS5 Verträge/\nPost produktiv"), (18, "MS6 Regel-\nbetrieb")]
-    for m, t in ms:
+    p.box(lx, my, lw, 58, "Meilensteine / Qualitätstore (Vorschlag)\nQG-5 je Optimierungspaket", "th", extra="fontSize=12;")
+    p.box(tx0, my, months * mw, 58, "", "rounded=0;fillColor=%s;strokeColor=%s;" % (C['yellow_l'], C['grey_m']))
+    for i, (m, t) in enumerate(ms):
         xm = tx0 + m * mw
-        p.box(xm - 9, my + 4, 18, 18, "", "gateway", extra="fillColor=%s;strokeColor=%s;" % (C['orange'], C['orange']))
-        p.box(xm - 60 if m < 18 else xm - 104, my + 20, 120 if m < 18 else 106, 32, t, "textc",
-              extra="fontSize=9;fontStyle=1;" + ("" if m < 18 else "align=right;"))
+        p.box(xm - 8, my + 3, 16, 16, "", "gateway", extra="fillColor=%s;strokeColor=%s;" % (C['orange'], C['orange']))
+        w = 84
+        p.box(xm - w / 2, my + 18, w, 40, t, "textc", extra="fontSize=9;fontStyle=1;")
 
-    # Hinweise unten
-    ny = my + 62
+    ny = my + 70
     nh = min(150, 1120 - ny)
     p.box(lx, ny, 560, nh,
           "**Leitgedanken**\n"
-          "• Rechnungseingang zuerst (größter Hebel), dann PM-Freigabe, Bau/BIM4You, Verträge, Post (P8).\n"
-          "• Standard vor Konfiguration vor Entwicklung (P2): BeSync-Pakete [A] erst ab P2, jeweils mit Zweck, Auslöser und Betrieb.\n"
-          "• Pilot-Bau in P1 ohne BIM4You-Automatik möglich (WF-02 vollständig in P3).",
+          "• Rechnungseingang zuerst, dann PM-Freigabe, Bau/BIM4You, Verträge, Post (P8).\n"
+          "• BeSync in Phase 1 nur für die Protokollierung (S-12); Lieferanten-App-Automatik (S-04/S-05), S-11 und Exportskript S-15 in Phase 2.\n"
+          "• Phasen 3 und 4 können sich überschneiden (gemeinsame MDIS-Ressourcen).",
           "info", extra="fontSize=11;")
     p.box(lx + 580, ny, 560, nh,
           "**Kritischer Pfad und Abhängigkeiten**\n"
-          "• DATEV-Komponenten, DATEVconnect und Riecken-Gateway beim Hoster (OP-04) bestimmen den Start von S-01/S-02.\n"
-          "• Mandantenerkennung mit echten Belegen (OP-02) und Test T03 vor dem Pilot-Go-live.\n"
-          "• BIM4You-Schnittstelle abhängig von Klärung mit BIB GmbH (OP-06).",
+          "• DATEV-Anbindung in Woche 1 von Phase 0 anstoßen (Hoster, Trios, Gateway, OP-04).\n"
+          "• Mandantenerkennung mit echten Belegen (OP-02) und Test T03 vor Pilot-Go-live.\n"
+          "• Phase 3: ED-03, OP-06 (BIB GmbH), OP-07, OPOS-Zugriff (OP-04/OP-43). Projektstart Q4/2026 → Pilot-Go-live Q1/2027.",
           "note", extra="fontSize=11;")
     legend_box(p, lx + 1160, ny, [("dvelop", "Phase / d.velop Standard"), ("dvelop_l", "d.velop Konfiguration"),
                                    ("mdis", "MDIS BeSync (Anpassung)"), ("ext", "Livos / Trios / extern"),
